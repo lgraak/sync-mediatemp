@@ -8,7 +8,8 @@ WEBHOOK_URL="https://discordapp.com/api/webhooks/1359376456991375431/oNoD_sMFYrA
 LOGFILE="/var/log/sync-mediatemp.log"
 DEST_DIR="/mnt/Media/MediaTemp"
 TEMP_DIR="$DEST_DIR/.inprogress"
-RSYNC_OPTS="-avz --inplace --partial --progress --temp-dir=$TEMP_DIR"
+SYNC_WINDOW_DAYS=30
+RSYNC_OPTS="-avz --inplace --partial --progress --temp-dir=$TEMP_DIR --max-age=${SYNC_WINDOW_DAYS}d"
 SSH_CMD="ssh"
 REMOTE_PATH="mediasource:/home/lgraak/files/MediaTemp/"
 
@@ -62,4 +63,3 @@ if [ $success -ne 1 ]; then
 fi
 
 echo "[FINISH $(date)] Sync completed." >> "$LOGFILE"
-
