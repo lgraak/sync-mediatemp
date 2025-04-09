@@ -1,0 +1,8 @@
+[Unit]
+Description=Sync MediaTemp from mediasource to local directory
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/sync-mediatemp.sh
