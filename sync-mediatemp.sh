@@ -9,10 +9,9 @@ LOGFILE="/var/log/sync-mediatemp.log"
 DEST_DIR="/mnt/Media/MediaTemp"
 TEMP_DIR="$DEST_DIR/.inprogress"
 SYNC_WINDOW_DAYS=30
-RSYNC_OPTS="-avz --inplace --partial --progress --temp-dir=$TEMP_DIR --max-age=${SYNC_WINDOW_DAYS}d"
 SSH_CMD="ssh"
 REMOTE_PATH="mediasource:/home/lgraak/files/MediaTemp/"
-
+FILELIST_TMP="/tmp/rsync_filelist.txt"
 MIN_FREE_MB=20480  # 20GB
 
 echo "[START $(date)] Starting sync..." >> "$LOGFILE"
@@ -37,7 +36,16 @@ if [ "$AVAIL_MB" -lt "$MIN_FREE_MB" ]; then
     exit 1
 fi
 
-# Step 1: Sync from remote into destination with retry
+# Step 1: Build file list from remote (last X days)
+echo "[INFO] Building file list for files modified in last $SYNC_WINDOW_DAYS days..." >> "$LOGFILE"
+
+$SSH_CMD mediasource "find /home/lgraak/files/MediaTemp -type f -mtime -$SYNC_WINDOW_DAYS" > "$FILELIST_TMP"
+if [ $? -ne 0 ]; then
+    error "Failed to retrieve file list from remote server"
+    exit 1
+fi
+
+# Step 2: Sync those files with retry logic
 MAX_RETRIES=3
 RETRY_DELAY=30
 attempt=1
@@ -45,7 +53,10 @@ success=0
 
 while [ $attempt -le $MAX_RETRIES ]; do
     echo "[INFO] Attempt $attempt at $(date)" >> "$LOGFILE"
-    rsync $RSYNC_OPTS -e "$SSH_CMD" "$REMOTE_PATH" "$DEST_DIR/" >> "$LOGFILE" 2>&1
+
+    rsync -avz --inplace --partial --progress \
+      --files-from="$FILELIST_TMP" --relative -e "$SSH_CMD" mediasource:/ "$DEST_DIR/" >> "$LOGFILE" 2>&1
+
     if [ $? -eq 0 ]; then
         success=1
         echo "[INFO] rsync completed successfully on attempt $attempt" >> "$LOGFILE"
@@ -56,6 +67,8 @@ while [ $attempt -le $MAX_RETRIES ]; do
     fi
     attempt=$((attempt + 1))
 done
+
+rm -f "$FILELIST_TMP"
 
 if [ $success -ne 1 ]; then
     error "rsync from mediasource failed after $MAX_RETRIES attempts"
