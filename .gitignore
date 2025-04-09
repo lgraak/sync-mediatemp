@@ -1,0 +1,26 @@
+# SSH keys (DO NOT COMMIT THESE)
+*.pem
+*.ppk
+id_*
+
+# Logs
+*.log
+/var/log/
+/*.log
+
+# System files
+*.swp
+*.tmp
+*~
+
+# Systemd files if symlinked or copied to system folders
+*.service
+*.timer
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Python backup/compiled files (if you ever use them)
+__pycache__/
+*.pyc
