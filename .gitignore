@@ -24,3 +24,6 @@ Thumbs.db
 # Python backup/compiled files (if you ever use them)
 __pycache__/
 *.pyc
+
+.env
+.env
