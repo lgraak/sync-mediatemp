@@ -1,91 +1,68 @@
-# MediaTemp Sync Script
+# MediaTemp Sync & Log Viewer
 
-This repo contains a systemd-based solution for automatically syncing media files from a remote server via rsync over SSH. It supports large files, retry logic, error notifications via Discord, and ensures only fully downloaded files are processed by media managers like Sonarr and Radarr.
+This project includes:
 
----
-
-## Features
-- One-way sync from remote server to local destination
-- Preserves subdirectory structure (Books, Movies, Music, TV)
-- Avoids re-downloading already-synced files
-- Direct-to-destination syncing with hidden temp files
-- Only syncs files modified within the last X days (configurable)
-- Retry logic with delay and error reporting
-- Disk space check before starting
-- Systemd timer for scheduled syncs
-- `.env` support for config management
+1. A systemd-based rsync sync script to copy media files from a remote server
+2. A Python Flask-based real-time log viewer for sync logs
 
 ---
 
-## Folder Structure
+## 🧩 Features
+
+- Syncs only files modified in the last X days (configurable)
+- Retries on failure and sends errors to a Discord webhook
+- Logs to `/var/log/sync-mediatemp.log`
+- Streams live sync logs to a browser using Server-Sent Events (like `tail -f`)
+- All configuration stored in a `.env` file
+
+---
+
+## 📁 Project Structure
+
 ```
-/mnt/Media/MediaTemp/
-├── Books/
-├── Movies/
-├── Music/
-└── TV/
-└── .inprogress/
+sync-mediatemp/
+├── sync-mediatemp.sh           # Main sync script
+├── logviewer.py                # Flask real-time log viewer
+├── logviewer.service           # Systemd service to run log viewer at boot
+├── sync-mediatemp.service      # Systemd sync service
+├── sync-mediatemp.timer        # Systemd timer
+├── .env                        # Environment configuration (not tracked in Git)
+├── .gitignore                  # Git ignore file
+└── README.md                   # This file
 ```
 
 ---
 
-## Requirements
-- Debian or Ubuntu-based container or server
-- rsync
-- systemd
-- curl (for Discord notifications)
-- SSH key-based access to remote server (no passphrase)
+## ⚙️ Setup Instructions
 
----
+### 1. Clone the Repository
 
-## Setup Instructions
-
-### 1. Clone or copy this repo
 ```bash
 git clone https://github.com/yourusername/sync-mediatemp.git
+cd sync-mediatemp
 ```
 
-### 2. Create `.env` file for configuration
+### 2. Configure SSH and `.env`
+
+Follow the existing instructions for setting up SSH and fill out `.env` with:
 ```ini
-# .env
 SYNC_WINDOW_DAYS=30
 MIN_FREE_MB=20480
 MAX_RETRIES=3
 RETRY_DELAY=30
 ```
 
-> Do **not** commit this file. It is ignored by `.gitignore`.
+---
 
-### 3. SSH Key Setup
-- Generate a dedicated passphrase-less SSH key (e.g., `id_github`)
-- Copy the public key to the remote server's `~/.ssh/authorized_keys`
-- Add to GitHub for code pushing, and to `~/.ssh/config`:
-```ini
-Host github.com
-    HostName github.com
-    User git
-    IdentityFile ~/.ssh/id_github
-    IdentitiesOnly yes
-```
+## 🔁 Set Up Sync Script
 
-- Also configure access to the source server (`mediasource`):
-```ini
-Host mediasource
-    HostName your.remote.server
-    User yourusername
-    IdentityFile ~/.ssh/id_sync_rsync
-```
-
-### 4. Install Script
 ```bash
 sudo cp sync-mediatemp.sh /usr/local/bin/
 sudo chmod +x /usr/local/bin/sync-mediatemp.sh
-```
 
-### 5. Set Up Systemd Service and Timer
-```bash
 sudo cp sync-mediatemp.service /etc/systemd/system/
 sudo cp sync-mediatemp.timer /etc/systemd/system/
+
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 sudo systemctl enable --now sync-mediatemp.timer
@@ -93,45 +70,64 @@ sudo systemctl enable --now sync-mediatemp.timer
 
 ---
 
-## Discord Notification
-- Create a webhook in your Discord server
-- Replace `WEBHOOK_URL` in `sync-mediatemp.sh` with your actual webhook
+## 🌐 Set Up Real-Time Log Viewer
 
----
-
-## Logging
-- Log file: `/var/log/sync-mediatemp.log`
-- System logs:
+### 1. Install Python dependencies
 ```bash
-journalctl -u sync-mediatemp.service
+sudo apt update
+sudo apt install python3-pip -y
+pip3 install flask
 ```
 
----
+### 2. Create Systemd Service
 
-## Git Tips
-- `.env` is excluded via `.gitignore`
-- Update and push code:
 ```bash
-git add sync-mediatemp.sh .gitignore
-git commit -m "Updated sync script with .env support"
-git push
+sudo cp logviewer.py /usr/local/bin/
+sudo cp logviewer.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now logviewer.service
 ```
 
+### 3. Access the Viewer
+
+Open your browser to:
+```
+http://<server-ip>:8080
+```
+
+You’ll see a live stream of `/var/log/sync-mediatemp.log`.
+
 ---
 
-## Files Included
-- `sync-mediatemp.sh` — main sync script
-- `sync-mediatemp.service` — systemd service unit
-- `sync-mediatemp.timer` — systemd timer unit
-- `.gitignore` — excludes sensitive config
-- `README.md` — this file
+## 🔒 Security Notes
+
+- Do not expose this server to the public without securing access
+- You can use a reverse proxy with authentication or IP restrictions
 
 ---
 
-## License
+## 🪵 Logging
+
+- Sync log: `/var/log/sync-mediatemp.log`
+- Log viewer: view in browser or run `journalctl -u logviewer.service`
+
+---
+
+## 📦 Deployment Recap
+
+1. Script and timer installed
+2. Log viewer service enabled
+3. Configurable via `.env`
+4. GitHub connected
+
+---
+
+## 📜 License
+
 MIT
 
 ---
 
-## Credits
-Originally developed as an automated sync solution for use with torrent-based downloaders and local media libraries.
+## 🙌 Credits
+
+Brought to life with real-world rsync frustration and a passion for automation!

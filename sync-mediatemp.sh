@@ -57,7 +57,7 @@ success=0
 while [ $attempt -le $MAX_RETRIES ]; do
     echo "[INFO] Attempt $attempt at $(date)" >> "$LOGFILE"
 
-    rsync -avz --inplace --partial --progress \
+    stdbuf -oL -eL rsync -avz --inplace --partial --progress \
       --files-from="$FILELIST_TMP" --relative -e "$SSH_CMD" mediasource:/ "$DEST_DIR/" >> "$LOGFILE" 2>&1
 
     if [ $? -eq 0 ]; then
@@ -79,4 +79,3 @@ if [ $success -ne 1 ]; then
 fi
 
 echo "[FINISH $(date)] Sync completed." >> "$LOGFILE"
-
