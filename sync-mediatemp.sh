@@ -57,7 +57,7 @@ success=0
 while [ $attempt -le $MAX_RETRIES ]; do
     echo "[INFO] Attempt $attempt at $(date)" >> "$LOGFILE"
 
-    stdbuf -oL -eL rsync -avz --inplace --partial --progress \
+    stdbuf -oL -eL rsync -avz --inplace --partial --info=progress2 \
       --files-from="$FILELIST_TMP" --relative -e "$SSH_CMD" mediasource:/ "$DEST_DIR/" >> "$LOGFILE" 2>&1
 
     if [ $? -eq 0 ]; then
