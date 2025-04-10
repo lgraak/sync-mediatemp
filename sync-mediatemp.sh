@@ -29,6 +29,19 @@ error() {
       -d "{\"content\": \"$MSG\"}" "$WEBHOOK_URL" > /dev/null
 }
 
+# ✅ Check and mount CIFS if needed
+if ! mountpoint -q /mnt/Media; then
+    echo "[WARN $(date)] /mnt/Media is not mounted, attempting mount..." >> "$LOGFILE"
+    mount /mnt/Media
+    sleep 2
+    if ! mountpoint -q /mnt/Media; then
+        error "CIFS mount at /mnt/Media failed to remount."
+        exit 1
+    else
+        echo "[INFO $(date)] Remounted /mnt/Media successfully." >> "$LOGFILE"
+    fi
+fi
+
 # Ensure temp dir and subfolders exist
 mkdir -p "$TEMP_DIR"
 for folder in Books Movies Music TV; do
