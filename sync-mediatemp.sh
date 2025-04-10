@@ -63,6 +63,12 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Log currently syncing folder (best guess from first path)
+SYNCING_FOLDER=$(head -n 1 "$FILELIST_TMP" | awk -F '/' '{print $(NF-1)}')
+if [ -n "$SYNCING_FOLDER" ]; then
+    echo "[SYNCING] Folder: $SYNCING_FOLDER" >> "$LOGFILE"
+fi
+
 # Sync with retry logic
 attempt=1
 success=0
@@ -92,3 +98,4 @@ if [ $success -ne 1 ]; then
 fi
 
 echo "[FINISH $(date)] Sync completed." >> "$LOGFILE"
+
