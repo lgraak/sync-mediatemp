@@ -96,6 +96,3 @@ if [ $success -ne 1 ]; then
     error "rsync from mediasource failed after $MAX_RETRIES attempts"
     exit 1
 fi
-
-echo "[FINISH $(date)] Sync completed." >> "$LOGFILE"
-
