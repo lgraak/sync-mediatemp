@@ -1,7 +1,7 @@
 [Unit]
-Description=Sync MediaTemp from mediasource to local directory
+Description=Sync MediaTemp Files from Remote Server
+After=network-online.target mnt-Media.mount
 Wants=network-online.target
-After=network-online.target
 
 [Service]
 Type=oneshot

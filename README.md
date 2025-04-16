@@ -1,63 +1,56 @@
-# sync-mediatemp (2025 Overhaul)
+# sync-mediatemp
 
-## 🚀 Purpose
+This script automatically syncs files from a remote server to the local `/mnt/Media/MediaTemp` directory using `rsync`. It uses `--size-only` to avoid downloading files that haven't changed in size, even if their timestamps differ.
 
-This script syncs media files from a remote SSH-accessible Linux server to a local directory mounted via Samba.
+## 💾 Files Included
 
-### ✅ Why We Updated It
+- `sync-mediatemp.sh` — main sync script
+- `sync-mediatemp.service` — systemd service
+- `sync-mediatemp.timer` — systemd timer
+- `.env` — optional file for future configs like webhook URLs
 
-The original version:
-- Used `find -mtime` to build a file list
-- Missed some BitTorrent-downloaded files that had older modification times
+## 📦 Deployment Instructions
 
-The new version:
-- Lets `rsync` decide what needs copying
-- Uses `--update` to avoid overwriting newer local files
-- Removes file list dependency entirely
+1. **Extract the zip on your server** (e.g., to `~/sync-mediatemp`):
+    ```bash
+    unzip sync-mediatemp.zip -d ~/sync-mediatemp
+    cd ~/sync-mediatemp
+    ```
 
----
+2. **Make the script executable**:
+    ```bash
+    chmod +x sync-mediatemp.sh
+    ```
 
-## 🛠 What's Included
+3. **Copy files to system locations**:
+    ```bash
+    cp sync-mediatemp.sh /usr/local/bin/
+    cp sync-mediatemp.service /etc/systemd/system/
+    cp sync-mediatemp.timer /etc/systemd/system/
+    ```
 
-- `sync-mediatemp.sh`: The updated sync script
-- `README.md`: This file
+4. **Reload and enable systemd services**:
+    ```bash
+    systemctl daemon-reexec
+    systemctl daemon-reload
+    systemctl enable --now sync-mediatemp.timer
+    ```
 
----
+5. **Optional**: Run it manually to test:
+    ```bash
+    systemctl start sync-mediatemp.service
+    ```
 
-## 🔁 Installation (after testing)
+6. **GitHub Backup**:
+    ```bash
+    cd ~/sync-mediatemp
+    git add .
+    git commit -m "Switch to --size-only for safer syncing"
+    git push
+    ```
 
-```bash
-# Copy to system location
-cp sync-mediatemp.sh /usr/local/bin/
-chmod +x /usr/local/bin/sync-mediatemp.sh
-```
+## ✅ Notes
 
----
-
-## 🔌 Disable Old Version (systemd)
-
-```bash
-systemctl disable --now sync-mediatemp.service
-systemctl disable --now sync-mediatemp.timer
-```
-
----
-
-## ☁️ Upload to GitHub
-
-```bash
-cd ~/sync-mediatemp
-cp /usr/local/bin/sync-mediatemp.sh .
-
-git add sync-mediatemp.sh README.md
-git commit -m "Overhaul: Removed find logic, improved rsync behavior"
-git push
-```
-
----
-
-## 🧪 One-Off Sync (manual run)
-
-```bash
-/usr/local/bin/sync-mediatemp.sh
-```
+- Ensure your remote SSH connection (`mediasource`) is working
+- Make sure `/mnt/Media` is mounted before sync
+- Script logs to `/var/log/sync-mediatemp.log`
